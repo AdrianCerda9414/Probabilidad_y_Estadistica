@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador infinito de ejercicios</title>
+<script>
+window.MathJax = {
+  tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$']]},
+  svg:{fontCache:'global'},
+  options:{skipHtmlTags:['script','noscript','style','textarea','pre','code']}
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+<style>
+:root{
+  --bg:#f4f6fb; --card:#fff; --ink:#111827; --muted:#6b7280;
+  --brand:#4f46e5; --brand2:#7c3aed; --line:#e5e7eb;
+  --ok:#059669; --okbg:#ecfdf5; --err:#dc2626; --errbg:#fef2f2;
+  --warn:#b45309; --warnbg:#fffbeb;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; padding:24px 12px;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg); color:var(--ink); line-height:1.55;
+}
+.wrap{max-width:900px; margin:0 auto;}
+.card{
+  background:var(--card); border-radius:16px;
+  box-shadow:0 8px 28px rgba(17,24,39,0.08);
+  overflow:hidden; border:1px solid var(--line);
+}
+.card-header{
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  color:#fff; padding:24px 28px;
+}
+.card-header h1{margin:0 0 4px 0; font-size:1.6rem; font-weight:700; letter-spacing:-0.01em;}
+.card-header p{margin:0; opacity:0.95; font-size:0.95rem;}
+.card-body{padding:24px 28px;}
+.btn-row{display:flex; justify-content:flex-end; margin-bottom:16px;}
+.btn-primary,.btn-ghost,.btn-soft{
+  font:inherit; cursor:pointer; border-radius:10px; padding:10px 16px;
+  border:1px solid transparent; transition:all 0.15s ease;
+}
+.btn-primary{background:var(--brand); color:#fff; border-color:var(--brand);}
+.btn-primary:hover{background:#4338ca;}
+.btn-ghost{background:transparent; color:var(--brand); border-color:var(--line);}
+.btn-ghost:hover{background:#f9fafb;}
+.btn-soft{background:#eef2ff; color:var(--brand); border-color:#e0e7ff;}
+.btn-soft:hover{background:#e0e7ff;}
+.input-row{display:flex; gap:8px; flex-wrap:wrap; margin:16px 0;}
+#respuesta{
+  flex:1 1 280px; padding:10px 14px; font:inherit; border-radius:10px;
+  border:1px solid var(--line); background:#fff; color:var(--ink);
+}
+#respuesta:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(79,70,229,0.15);}
+.feedback{border-radius:10px; padding:12px 14px; margin-top:8px; display:none; font-size:0.95rem;}
+.feedback.ok{display:block; background:var(--okbg); color:var(--ok); border:1px solid #a7f3d0;}
+.feedback.err{display:block; background:var(--errbg); color:var(--err); border:1px solid #fecaca;}
+.panel{border-radius:10px; padding:14px 16px; margin-top:12px; display:none;}
+.panel.visible{display:block;}
+.panel.pista{background:var(--warnbg); border:1px solid #fde68a; color:var(--warn);}
+.panel.explicacion{background:#f5f3ff; border:1px solid #ddd6fe; color:var(--brand2);}
+.marcador{
+  display:flex; gap:16px; align-items:center; margin-top:20px;
+  padding-top:16px; border-top:1px solid var(--line);
+  font-size:0.9rem; color:var(--muted); flex-wrap:wrap;
+}
+.marcador strong{color:var(--ink);}
+.kbd{
+  display:inline-block; padding:2px 6px; border-radius:4px;
+  background:#f3f4f6; border:1px solid var(--line);
+  font-size:0.8rem; font-family:ui-monospace,monospace; color:var(--ink);
+}
+#enunciado{
+  background:#fbfcfe; border:1px solid var(--line);
+  border-radius:10px; padding:16px 18px; min-height:60px;
+}
+#enunciado p{margin:0;}
+footer{text-align:center; color:var(--muted); font-size:0.85rem; margin-top:18px; padding:6px;}
+code{background:rgba(255,255,255,0.55); padding:1px 6px; border-radius:4px; font-family:ui-monospace,monospace;}
+@media(max-width:560px){
+  .card-header h1{font-size:1.3rem;}
+  .card-body{padding:16px;}
+  .input-row{flex-direction:column;}
+  .input-row button{width:100%;}
+  #respuesta{flex:1 1 auto;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="card-header">
+      <h1>Generador infinito de ejercicios</h1>
+      <p>Materia: Probabilidad y Estadística · Tema: Regresión lineal simple y múltiple, y estimación por máxima verosimilitud</p>
+    </div>
+    <div class="card-body">
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="nuevoEjercicio()">Nuevo ejercicio</button>
+      </div>
+      <div id="enunciado"></div>
+      <div class="input-row">
+        <input id="respuesta" type="text" autocomplete="off" placeholder="Usa ^ para potencias y / para fracciones…">
+        <button class="btn-primary" onclick="verificar()">Verificar</button>
+        <button class="btn-soft" onclick="mostrarPista()">Pista</button>
+        <button class="btn-soft" onclick="mostrarExplicacion()">Explicación</button>
+      </div>
+      <div id="feedback" class="feedback"></div>
+      <div id="pistaBox" class="panel pista"></div>
+      <div id="explicacionBox" class="panel explicacion"></div>
+      <div class="marcador">
+        <span>Aciertos: <strong id="mArc">0</strong></span>
+        <span>Intentos: <strong id="mInt">0</strong></span>
+        <span><span class="kbd">Enter</span> = verificar · <span class="kbd">N</span> = nuevo</span>
+      </div>
+    </div>
+  </div>
+  <footer>Generador aleatorio educativo · Probabilidad y Estadística · Regresión lineal simple y múltiple, y estimación por máxima verosimilitud</footer>
+</div>
+<script>
+// ============ ESTADO ============
+var aciertos = 0, intentos = 0;
+var ejActual = null;
+
+// ============ UTILIDADES ============
+function escaparHTML(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function normalizar(valor){
+  var s = String(valor).toLowerCase();
+  s = s.replace(/\$/g,'');
+  s = s.replace(/\\left/g,'').replace(/\\right/g,'');
+  s = s.replace(/\\,/g,'').replace(/\\;/g,'').replace(/\\quad/g,'').replace(/\\ /g,'');
+  s = s.replace(/·/g,'*').replace(/\s+/g,'');
+  s = s.replace(/\\dfrac/g,'\\frac');
+  s = s.replace(/\\cdot/g,'*').replace(/\\times/g,'*');
+  s = s.replace(/\\div/g,'/');
+  s = s.replace(/\\sin/g,'sin').replace(/\\cos/g,'cos').replace(/\\tan/g,'tan');
+  s = s.replace(/\\ln/g,'ln').replace(/\\pi/g,'pi');
+  // superíndices Unicode
+  s = s.replace(/²/g,'^2').replace(/³/g,'^3').replace(/⁴/g,'^4').replace(/⁵/g,'^5').replace(/⁶/g,'^6');
+  // pre-quitar llaves de subíndices simples: _{ab} -> _ab
+  var prev = '';
+  while(prev !== s){
+    prev = s;
+    s = s.replace(/_\{([^{}]*)\}/g, '_$1');
+  }
+  // \frac{A}{B} -> ((A)/(B)) iterativamente
+  prev = '';
+  while(prev !== s){
+    prev = s;
+    s = s.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, '(($1)/($2))');
+  }
+  // quitar llaves restantes
+  s = s.replace(/\{/g,'').replace(/\}/g,'');
+  // quitar barra invertida
+  s = s.replace(/\\/g,'');
+  // ^(...) -> ^...
+  s = s.replace(/\^\(([^()]*)\)/g, '^$1');
+  return s;
+}
+
+function sinParentesis(s){
+  return String(s).replace(/\(/g,'').replace(/\)/g,'');
+}
+
+function coincideTexto(entrada, acepta){
+  var ne = normalizar(entrada);
+  for(var i=0; i<acepta.length; i++){
+    var na = normalizar(acepta[i]);
+    if(ne === na) return true;
+    if(sinParentesis(ne) === sinParentesis(na)) return true;
+  }
+  return false;
+}
+
+function coincideAntiderivada(entrada, acepta){
+  var ne = normalizar(entrada).replace(/(\+c|-c)$/g,'');
+  for(var i=0; i<acepta.length; i++){
+    var na = normalizar(acepta[i]).replace(/(\+c|-c)$/g,'');
+    if(ne === na) return true;
+    if(sinParentesis(ne) === sinParentesis(na)) return true;
+  }
+  return false;
+}
+
+function aNumero(entrada){
+  var s = String(entrada).trim().replace(/,/g,'.').replace(/\$/g,'').replace(/\{/g,'').replace(/\}/g,'');
+  var m = s.match(/^(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)$/);
+  if(m){
+    var num = parseFloat(m[1]), den = parseFloat(m[2]);
+    if(den === 0) return NaN;
+    return num/den;
+  }
+  if(/^-?\d+(?:\.\d+)?$/.test(s)) return parseFloat(s);
+  return NaN;
+}
+
+function tiposet(nodo, intento){
+  intento = intento || 0;
+  if(window.MathJax && window.MathJax.typesetPromise){
+    window.MathJax.typesetPromise([nodo]);
+    return;
+  }
+  if(intento < 40){
+    setTimeout(function(){ tiposet(nodo, intento+1); }, 200);
+  }
+}
+
+// ============ GENERADOR ============
+function sel(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function rnd(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+// Variante 1: pendiente por mínimos cuadrados con 3 puntos colineales (numeric)
+function vPendiente(){
+  var a = rnd(1,5);
+  var b = rnd(0,4);
+  var x0 = rnd(1,3);
+  var pts = [];
+  for(var i=0;i<3;i++){
+    var x = x0+i, y = a*x+b;
+    pts.push('(' + x + ',' + y + ')');
+  }
+  var ctx = sel([
+    'Humberto, ingeniero en Inteligencia Artificial, calibra un sensor de temperatura',
+    'Leonardo, desarrollador de algoritmos de visión, mide la respuesta de un actuador lineal',
+    'Paulo, investigador en robótica, registra la tensión de un motor paso a paso'
+  ]);
+  var problema = ctx + '. Obtiene tres pares $(x,y)$: ' + pts.join(',  ') + '. Calcula la pendiente $\\beta_1$ del ajuste por mínimos cuadrados.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'La pendiente es $\\beta_1 = ' + a + '$.',
+    respuestaLaTeX: '\\beta_1 = ' + a,
+    acepta: [String(a), a + '.0'],
+    respuesta: a,
+    tolerancia: 0.001,
+    pista: 'Cuando los puntos son colineales, la pendiente del ajuste coincide con la razón $\\dfrac{y_2 - y_1}{x_2 - x_1}$ entre dos puntos consecutivos.',
+    explicacion: 'Paso 1. Identifica dos puntos del conjunto, por ejemplo $(x_1,y_1)$ y $(x_2,y_2)$. Paso 2. Calcula las diferencias $\\Delta y = y_2 - y_1$ y $\\Delta x = x_2 - x_1$. Paso 3. Aplica la razón de cambio $\\beta_1 = \\dfrac{\\Delta y}{\\Delta x}$. Paso 4. Como los datos son colineales, el resultado es exacto: $\\beta_1 = ' + a + '$.'
+  };
+}
+
+// Variante 2: intercepto dada la pendiente (numeric)
+function vIntercepto(){
+  var a = rnd(1,5);
+  var b = rnd(0,4);
+  var x0 = rnd(1,3);
+  var pts = [];
+  for(var i=0;i<3;i++){
+    var x = x0+i, y = a*x+b;
+    pts.push('(' + x + ',' + y + ')');
+  }
+  var ctx = sel([
+    'En un proyecto de innovación digital, Sebastián modela el costo $y$ en función del número $x$ de dispositivos',
+    'En una comunidad tseltal, el equipo de Daniel registra la producción $y$ según el riego $x$ aplicado',
+    'Nelson, mecatrónico, estima el desgaste $y$ de una herramienta según los ciclos $x$ de uso'
+  ]);
+  var problema = ctx + '. La pendiente del ajuste lineal es $\\beta_1 = ' + a + '$ y los datos observados son: ' + pts.join(',  ') + '. Determina el intercepto $\\beta_0$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El intercepto es $\\beta_0 = ' + b + '$.',
+    respuestaLaTeX: '\\beta_0 = ' + b,
+    acepta: [String(b), b + '.0'],
+    respuesta: b,
+    tolerancia: 0.001,
+    pista: 'Usa la relación $\\beta_0 = \\bar{y} - \\beta_1 \\bar{x}$, donde $\\bar{x}$ y $\\bar{y}$ son los promedios de los datos.',
+    explicacion: 'Paso 1. Calcula el promedio $\\bar{x}$ de los valores de $x$. Paso 2. Calcula el promedio $\\bar{y}$ de los valores de $y$. Paso 3. Sustituye en $\\beta_0 = \\bar{y} - \\beta_1 \\bar{x}$ con $\\beta_1 = ' + a + '$. Paso 4. Simplifica y obtienes $\\beta_0 = ' + b + '$.'
+  };
+}
+
+// Variante 3: predicción en regresión simple (numeric)
+function vPrediccionSimple(){
+  var a = rnd(1,4);
+  var b = rnd(1,6);
+  var x = rnd(2,6);
+  var y = a*x + b;
+  var ctx = sel([
+    'Diego José, ingeniero en IA, entrena un modelo de regresión lineal simple',
+    'Francisco, investigador en energías renovables, ajusta un modelo lineal',
+    'Raúl, en un colectivo de innovación digital, modela datos experimentales'
+  ]);
+  var problema = ctx + '. La recta ajustada es $\\hat{y} = ' + a + 'x + ' + b + '$. Predice el valor $\\hat{y}$ cuando $x = ' + x + '$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'La predicción es $\\hat{y} = ' + a + '\\cdot ' + x + ' + ' + b + ' = ' + y + '$.',
+    respuestaLaTeX: '\\hat{y} = ' + y,
+    acepta: [String(y), y + '.0'],
+    respuesta: y,
+    tolerancia: 0.001,
+    pista: 'Sustituye el valor de $x$ en la recta ajustada $\\hat{y} = \\beta_1 x + \\beta_0$ y opera.',
+    explicacion: 'Paso 1. Toma la recta ajustada $\\hat{y} = ' + a + 'x + ' + b + '$. Paso 2. Sustituye $x = ' + x + '$. Paso 3. Multiplica el coeficiente: $' + a + ' \\cdot ' + x + ' = ' + (a*x) + '$. Paso 4. Suma el intercepto: $' + (a*x) + ' + ' + b + ' = ' + y + '$. La predicción es $' + y + '$.'
+  };
+}
+
+// Variante 4: predicción en regresión múltiple (numeric)
+function vPrediccionMultiple(){
+  var b0 = rnd(1,8);
+  var b1 = rnd(1,4);
+  var b2 = rnd(1,4);
+  var x1 = rnd(2,5);
+  var x2 = rnd(2,5);
+  var y = b0 + b1*x1 + b2*x2;
+  var ctx = sel([
+    'En una startup de innovación, Rafael usa regresión lineal múltiple para estimar el rendimiento $y$',
+    'El equipo mecatrónico de Luis Mario modela la vida útil $y$ de una batería con dos predictores',
+    'En una comunidad nahua, el modelo de Sergio predice la cosecha $y$ a partir del clima'
+  ]);
+  var problema = ctx + '. El modelo ajustado es $\\hat{y} = ' + b0 + ' + ' + b1 + 'x_1 + ' + b2 + 'x_2$. Calcula la predicción cuando $x_1 = ' + x1 + '$ y $x_2 = ' + x2 + '$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'La predicción es $\\hat{y} = ' + b0 + ' + ' + b1 + '\\cdot' + x1 + ' + ' + b2 + '\\cdot' + x2 + ' = ' + y + '$.',
+    respuestaLaTeX: '\\hat{y} = ' + y,
+    acepta: [String(y), y + '.0'],
+    respuesta: y,
+    tolerancia: 0.001,
+    pista: 'Sustituye ambos valores $x_1$ y $x_2$ en el modelo lineal múltiple y suma todos los términos.',
+    explicacion: 'Paso 1. Toma el modelo $\\hat{y} = ' + b0 + ' + ' + b1 + 'x_1 + ' + b2 + 'x_2$. Paso 2. Sustituye $x_1 = ' + x1 + '$ y $x_2 = ' + x2 + '$. Paso 3. Multiplica cada coeficiente: $' + b1 + '\\cdot' + x1 + ' = ' + (b1*x1) + '$ y $' + b2 + '\\cdot' + x2 + ' = ' + (b2*x2) + '$. Paso 4. Suma todo: $' + b0 + ' + ' + (b1*x1) + ' + ' + (b2*x2) + ' = ' + y + '$.'
+  };
+}
+
+// Variante 5: coeficiente de determinación R² a partir de r (numeric)
+function vR2(){
+  var rOpciones = [
+    {r:'0.8', r2:'0.64', rn:0.8, r2n:0.64},
+    {r:'0.9', r2:'0.81', rn:0.9, r2n:0.81},
+    {r:'0.6', r2:'0.36', rn:0.6, r2n:0.36},
+    {r:'0.7', r2:'0.49', rn:0.7, r2n:0.49},
+    {r:'0.5', r2:'0.25', rn:0.5, r2n:0.25}
+  ];
+  var opt = sel(rOpciones);
+  var ctx = sel([
+    'Al analizar datos de adopción tecnológica en comunidades rurales, Diego obtiene un coeficiente de correlación $r = ' + opt.r + '$',
+    'Estudiando el rendimiento de un algoritmo de visión, Enrique reporta $r = ' + opt.r + '$',
+    'En un estudio intercultural sobre salud, Samuel halla una correlación lineal $r = ' + opt.r + '$'
+  ]);
+  var problema = ctx + '. Calcula el coeficiente de determinación $R^2$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El coeficiente es $R^2 = r^2 = ' + opt.r + '^2 = ' + opt.r2 + '$.',
+    respuestaLaTeX: 'R^2 = ' + opt.r2,
+    acepta: [opt.r2, String(opt.r2n), opt.r2n.toFixed(2)],
+    respuesta: opt.r2n,
+    tolerancia: 0.001,
+    pista: 'Para regresión lineal simple, $R^2$ es el cuadrado del coeficiente de correlación muestral: $R^2 = r^2$.',
+    explicacion: 'Paso 1. Recuerda la relación $R^2 = r^2$ válida en regresión lineal simple. Paso 2. Toma el valor dado $r = ' + opt.r + '$. Paso 3. Elévalo al cuadrado: $(' + opt.r + ')^2 = ' + opt.r2 + '$. Paso 4. El coeficiente de determinación es $' + opt.r2 + '$, es decir, el porcentaje de variabilidad de $y$ explicada por el modelo.'
+  };
+}
+
+// Variante 6: fórmula simbólica de la pendiente (symbolic)
+function vFormulaPendiente(){
+  var ctx = sel([
+    'Maria Andrea, doctoranda en IA, debe justificar el estimador por mínimos cuadrados',
+    'En un seminario de estadística aplicada, Constanza explica la fórmula de la pendiente',
+    'El colectivo de innovación digital de Fanny documenta el modelo lineal simple'
+  ]);
+  var problema = ctx + '. Escribe la fórmula del estimador de la pendiente $\\beta_1$ en regresión lineal simple usando $S_{xy}$ y $S_{xx}$.';
+  return {
+    tipo:'simbolica',
+    problema: problema,
+    solucion: 'La fórmula es $\\beta_1 = \\dfrac{S_{xy}}{S_{xx}}$.',
+    respuestaLaTeX: '\\beta_1 = \\dfrac{S_{xy}}{S_{xx}}',
+    acepta: [
+      'Sxy/Sxx',
+      'Sxy/Sxx',
+      '(Sxy)/(Sxx)',
+      '\\frac{Sxy}{Sxx}',
+      '\\dfrac{Sxy}{Sxx}',
+      'Sxy/Sxx'
+    ],
+    pista: 'El estimador por mínimos cuadrados de la pendiente es un cociente entre dos sumatorios: la covarianza muestral $S_{xy}$ y la suma de cuadrados de $x$, $S_{xx}$.',
+    explicacion: 'Paso 1. Define $S_{xy} = \\sum (x_i - \\bar{x})(y_i - \\bar{y})$, la covarianza muestral. Paso 2. Define $S_{xx} = \\sum (x_i - \\bar{x})^2$, la varianza muestral de $x$. Paso 3. El estimador por mínimos cuadrados es $\\beta_1 = \\dfrac{S_{xy}}{S_{xx}}$. Paso 4. Esta fórmula minimiza la suma de cuadrados de los residuos $\\sum e_i^2$.'
+  };
+}
+
+// Variante 7: suma de cuadrados de los residuos SSE (numeric)
+function vSSE(){
+  var a = rnd(1,3);
+  var b = rnd(0,3);
+  var r1 = 0;
+  var r2 = sel([1,-1,2,-2]);
+  var r3 = sel([1,-1,0]);
+  var x1 = 1, x2 = 2, x3 = 3;
+  var y1 = a*x1 + b + r1;
+  var y2 = a*x2 + b + r2;
+  var y3 = a*x3 + b + r3;
+  var sse = r1*r1 + r2*r2 + r3*r3;
+  var ctx = sel([
+    'Alejandra, ingeniera mecatrónica, ajusta una recta $\\hat{y} = ' + a + 'x + ' + b + '$',
+    'En un laboratorio de IA aplicada, Luis Mario propone el modelo $\\hat{y} = ' + a + 'x + ' + b + '$',
+    'Innovando en una comunidad mixe, el equipo de Humberto usa el modelo $\\hat{y} = ' + a + 'x + ' + b + '$'
+  ]);
+  var problema = ctx + '. Los datos observados son $(1,' + y1 + ')$, $(2,' + y2 + ')$ y $(3,' + y3 + ')$. Calcula la suma de cuadrados de los residuos $SSE$.';
+  // cadena legible de residuos
+  function fmtRes(r){ return r < 0 ? ('$' + r + '$') : ('$' + r + '$'); }
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'Los residuos son ' + fmtRes(r1) + ', ' + fmtRes(r2) + ' y ' + fmtRes(r3) + ', por lo que $SSE = ' + r1 + '^2 + ' + (r2<0?'(' + r2 + ')':r2) + '^2 + ' + (r3<0?'(' + r3 + ')':r3) + '^2 = ' + sse + '$.',
+    respuestaLaTeX: 'SSE = ' + sse,
+    acepta: [String(sse), sse + '.0'],
+    respuesta: sse,
+    tolerancia: 0.001,
+    pista: 'Calcula cada residuo $e_i = y_i - \\hat{y}_i$, elévalo al cuadrado y suma: $SSE = \\sum e_i^2$.',
+    explicacion: 'Paso 1. Para $x=1$: $\\hat{y}_1 = ' + a + '\\cdot 1 + ' + b + ' = ' + (a*1+b) + '$; residuo $e_1 = ' + y1 + ' - ' + (a*1+b) + ' = ' + r1 + '$. Paso 2. Para $x=2$: $\\hat{y}_2 = ' + (a*2+b) + '$; residuo $e_2 = ' + y2 + ' - ' + (a*2+b) + ' = ' + r2 + '$. Paso 3. Para $x=3$: $\\hat{y}_3 = ' + (a*3+b) + '$; residuo $e_3 = ' + y3 + ' - ' + (a*3+b) + ' = ' + r3 + '$. Paso 4. Suma cuadrados: $(' + r1 + ')^2 + (' + r2 + ')^2 + (' + r3 + ')^2 = ' + sse + '$.'
+  };
+}
+
+// Variante 8: coeficiente de correlación r a partir de sumatorias (numeric)
+function vCorrelacion(){
+  var datasets = [
+    {n:3, sx:6, sy:15, sxy:34, sx2:14, sy2:83, r:1, rt:'1'},
+    {n:4, sx:10, sy:20, sxy:60, sx2:30, sy2:120, r:1, rt:'1'},
+    {n:4, sx:10, sy:20, sxy:40, sx2:30, sy2:120, r:-1, rt:'-1'},
+    {n:4, sx:10, sy:20, sxy:50, sx2:30, sy2:120, r:0, rt:'0'},
+    {n:4, sx:10, sy:20, sxy:55, sx2:30, sy2:120, r:0.5, rt:'0.5'},
+    {n:4, sx:10, sy:20, sxy:45, sx2:30, sy2:120, r:-0.5, rt:'-0.5'},
+    {n:5, sx:15, sy:25, sxy:83, sx2:55, sy2:135, r:0.8, rt:'0.8'},
+    {n:5, sx:15, sy:25, sxy:67, sx2:55, sy2:135, r:-0.8, rt:'-0.8'},
+    {n:10, sx:55, sy:55, sxy:352, sx2:385, sy2:385, r:0.6, rt:'0.6'}
+  ];
+  var d = sel(datasets);
+  var ctx = sel([
+    'Humberto, ingeniero en IA, recolecta datos para un análisis de correlación lineal',
+    'En un proyecto de innovación digital, el equipo de Leonardo analiza la relación entre dos variables',
+    'Leonardo, en un colectivo de innovación digital, estudia la asociación entre variables experimentales'
+  ]);
+  var num = d.n*d.sxy - d.sx*d.sy;
+  var dx2 = d.n*d.sx2 - d.sx*d.sx;
+  var dy2 = d.n*d.sy2 - d.sy*d.sy;
+  var problema = ctx + '. Con $n=' + d.n + '$ observaciones se tienen las sumatorias $\\sum x=' + d.sx + '$, $\\sum y=' + d.sy + '$, $\\sum xy=' + d.sxy + '$, $\\sum x^2=' + d.sx2 + '$ y $\\sum y^2=' + d.sy2 + '$. Calcula el coeficiente de correlación $r$ de Pearson.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El coeficiente es $r = \\dfrac{' + d.n + '\\cdot' + d.sxy + ' - ' + d.sx + '\\cdot' + d.sy + '}{\\sqrt{' + d.n + '\\cdot' + d.sx2 + ' - ' + d.sx + '^2}\\sqrt{' + d.n + '\\cdot' + d.sy2 + ' - ' + d.sy + '^2}} = ' + d.rt + '$.',
+    respuestaLaTeX: 'r = ' + d.rt,
+    acepta: [d.rt, String(d.r), d.r.toFixed(2), d.r.toFixed(1)],
+    respuesta: d.r,
+    tolerancia: 0.001,
+    pista: 'Aplica la fórmula $r = \\dfrac{n\\sum xy - \\sum x \\sum y}{\\sqrt{n\\sum x^2 - (\\sum x)^2}\\sqrt{n\\sum y^2 - (\\sum y)^2}}$. Calcula por separado el numerador y los dos factores del denominador.',
+    explicacion: 'Paso 1. Numerador: $n\\sum xy - \\sum x \\sum y = ' + d.n + '\\cdot' + d.sxy + ' - ' + d.sx + '\\cdot' + d.sy + ' = ' + num + '$. Paso 2. Factor en $x$: $n\\sum x^2 - (\\sum x)^2 = ' + d.n + '\\cdot' + d.sx2 + ' - ' + d.sx + '^2 = ' + dx2 + '$. Paso 3. Factor en $y$: $n\\sum y^2 - (\\sum y)^2 = ' + d.n + '\\cdot' + d.sy2 + ' - ' + d.sy + '^2 = ' + dy2 + '$. Paso 4. Sustituye: $r = \\dfrac{' + num + '}{\\sqrt{' + dx2 + '}\\sqrt{' + dy2 + '}} = ' + d.rt + '$.'
+  };
+}
+
+// Variante 9: estadístico t para la prueba del coeficiente de correlación (numeric)
+function vTcorrelacion(){
+  var combos = [
+    {r:0.8, rn:'0.8', n:6, sr:0.3, srt:'0.3', t:8/3, tt:'8/3', tdec:'2.667'},
+    {r:0.6, rn:'0.6', n:6, sr:0.4, srt:'0.4', t:1.5, tt:'3/2', tdec:'1.5'},
+    {r:0.8, rn:'0.8', n:11, sr:0.2, srt:'0.2', t:4, tt:'4', tdec:'4'},
+    {r:0.6, rn:'0.6', n:11, sr:0.8/3, srt:'0.267', t:2.25, tt:'9/4', tdec:'2.25'},
+    {r:0.6, rn:'0.6', n:18, sr:0.2, srt:'0.2', t:3, tt:'3', tdec:'3'},
+    {r:-0.8, rn:'-0.8', n:6, sr:0.3, srt:'0.3', t:-8/3, tt:'-8/3', tdec:'-2.667'},
+    {r:-0.6, rn:'-0.6', n:6, sr:0.4, srt:'0.4', t:-1.5, tt:'-3/2', tdec:'-1.5'}
+  ];
+  var c = sel(combos);
+  var ctx = sel([
+    'Sebastián, analista de datos en una startup de IA, prueba si la correlación muestral se extiende a la población',
+    'En un estudio intercultural sobre educación digital, Rafael contrasta la hipótesis de correlación nula',
+    'Paulo, investigador en mecatrónica, evalúa la significancia de una correlación entre sensores'
+  ]);
+  var r2 = (c.r*c.r).toFixed(2);
+  var unmr2 = (1 - c.r*c.r).toFixed(2);
+  var problema = ctx + '. Con una muestra de $n=' + c.n + '$ observaciones obtuvo $r=' + c.rn + '$. Calcule el estadístico de prueba $t$ para $H_0:P=0$ frente a $H_1:P\\ne 0$, usando $t=\\dfrac{r}{\\sqrt{\\dfrac{1-r^2}{n-2}}}$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El estadístico es $t=\\dfrac{' + c.rn + '}{\\sqrt{\\dfrac{1-(' + c.rn + ')^2}{' + (c.n-2) + '}}}=\\dfrac{' + c.rn + '}{' + c.srt + '}=' + c.tt + '\\approx ' + c.tdec + '$.',
+    respuestaLaTeX: 't = ' + c.tt,
+    acepta: [c.tt, c.tdec, String(c.t), c.t.toFixed(3), c.t.toFixed(2)],
+    respuesta: c.t,
+    tolerancia: 0.01,
+    pista: 'Primero calcula el error estándar $s_r=\\sqrt{\\dfrac{1-r^2}{n-2}}$ y luego divide $r$ entre $s_r$.',
+    explicacion: 'Paso 1. Identifica $r=' + c.rn + '$ y $n=' + c.n + '$, con $n-2=' + (c.n-2) + '$ grados de libertad. Paso 2. Calcula $r^2=' + r2 + '$ y $1-r^2=' + unmr2 + '$. Paso 3. Error estándar: $s_r=\\sqrt{\\dfrac{' + unmr2 + '}{' + (c.n-2) + '}}=' + c.srt + '$. Paso 4. Estadístico: $t=\\dfrac{' + c.rn + '}{' + c.srt + '}=' + c.tt + '\\approx ' + c.tdec + '$.'
+  };
+}
+
+// Variante 10: coeficiente de determinación a partir de SCE y STC (numeric)
+function vR2residuos(){
+  var combos = [
+    {sce:2, stc:10, r2:0.8, r2t:'0.8'},
+    {sce:4, stc:10, r2:0.6, r2t:'0.6'},
+    {sce:1, stc:4, r2:0.75, r2t:'0.75'},
+    {sce:3, stc:4, r2:0.25, r2t:'0.25'},
+    {sce:5, stc:20, r2:0.75, r2t:'0.75'},
+    {sce:1, stc:5, r2:0.8, r2t:'0.8'},
+    {sce:6, stc:10, r2:0.4, r2t:'0.4'},
+    {sce:0, stc:10, r2:1, r2t:'1'},
+    {sce:4, stc:25, r2:0.84, r2t:'0.84'}
+  ];
+  var c = sel(combos);
+  var ctx = sel([
+    'En un proyecto de innovación, Luis Mario ajusta un modelo de regresión y registra las sumas de cuadrados',
+    'Alejandra, ingeniera mecatrónica, analiza los residuales de un modelo de calibración',
+    'En una comunidad tsotsil, el equipo de Sebastián evalúa la calidad de un ajuste lineal'
+  ]);
+  var coc = c.sce/c.stc;
+  var problema = ctx + '. La suma de cuadrados de los residuos es $\\sum(y-\\hat{y})^2=' + c.sce + '$ y la suma de cuadrados total es $\\sum(y-\\bar{y})^2=' + c.stc + '$. Calcula el coeficiente de determinación $r^2$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El coeficiente es $r^2=1-\\dfrac{' + c.sce + '}{' + c.stc + '}=' + c.r2t + '$.',
+    respuestaLaTeX: 'r^2 = ' + c.r2t,
+    acepta: [c.r2t, String(c.r2), c.r2.toFixed(2), c.r2.toFixed(4)],
+    respuesta: c.r2,
+    tolerancia: 0.001,
+    pista: 'Usa $r^2 = 1 - \\dfrac{\\sum(y-\\hat{y})^2}{\\sum(y-\\bar{y})^2}$. El cociente representa la variabilidad NO explicada por el modelo.',
+    explicacion: 'Paso 1. Identifica $\\sum(y-\\hat{y})^2=' + c.sce + '$ (variabilidad residual) y $\\sum(y-\\bar{y})^2=' + c.stc + '$ (variabilidad total). Paso 2. Calcula el cociente: $\\dfrac{' + c.sce + '}{' + c.stc + '}=' + coc.toFixed(4) + '$ (proporción no explicada). Paso 3. Aplica $r^2=1-' + coc.toFixed(4) + '=' + c.r2t + '$. Paso 4. El modelo explica el $' + (c.r2*100).toFixed(0) + '\\%$ de la variabilidad de $y$.'
+  };
+}
+
+// Variante 11: error estándar de la estimación s_yx (numeric)
+function vSyx(){
+  var combos = [
+    {sce:4, n:6, syx:1, syxt:'1'},
+    {sce:16, n:6, syx:2, syxt:'2'},
+    {sce:36, n:6, syx:3, syxt:'3'},
+    {sce:9, n:11, syx:1, syxt:'1'},
+    {sce:36, n:11, syx:2, syxt:'2'},
+    {sce:81, n:11, syx:3, syxt:'3'},
+    {sce:8, n:4, syx:2, syxt:'2'},
+    {sce:18, n:4, syx:3, syxt:'3'},
+    {sce:144, n:11, syx:4, syxt:'4'}
+  ];
+  var c = sel(combos);
+  var ctx = sel([
+    'Nelson, ingeniero mecatrónico, ajusta un modelo de desgaste y necesita medir la dispersión residual',
+    'En un laboratorio de IA, Fanny evalúa la variabilidad de un modelo de predicción',
+    'Maria Andrea, en un proyecto intercultural de educación, estima el error de un modelo lineal'
+  ]);
+  var gl = c.n - 2;
+  var div = c.sce / gl;
+  var problema = ctx + '. Tras ajustar una recta de regresión con $n=' + c.n + '$ datos, la suma de cuadrados de los residuos es $\\sum(y-\\hat{y})^2=' + c.sce + '$. Calcula el error estándar de la estimación $s_{yx}$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El error estándar es $s_{yx}=\\sqrt{\\dfrac{' + c.sce + '}{' + c.n + '-2}}=\\sqrt{\\dfrac{' + c.sce + '}{' + gl + '}}=' + c.syxt + '$.',
+    respuestaLaTeX: 's_{yx} = ' + c.syxt,
+    acepta: [c.syxt, String(c.syx), c.syx.toFixed(2)],
+    respuesta: c.syx,
+    tolerancia: 0.001,
+    pista: 'El error estándar de la estimación es $s_{yx}=\\sqrt{\\dfrac{\\sum(y-\\hat{y})^2}{n-2}}$. Recuerda que se divide entre $n-2$, no entre $n$.',
+    explicacion: 'Paso 1. Identifica $\\sum(y-\\hat{y})^2=' + c.sce + '$ y $n=' + c.n + '$. Paso 2. Calcula los grados de libertad: $n-2=' + gl + '$ (se estiman dos parámetros $b_0$ y $b_1$). Paso 3. Divide: $\\dfrac{' + c.sce + '}{' + gl + '}=' + div + '$. Paso 4. Toma raíz cuadrada: $s_{yx}=\\sqrt{' + div + '}=' + c.syxt + '$.'
+  };
+}
+
+// Variante 12: estadístico t para la prueba de utilidad del modelo (numeric)
+function vTutilidad(){
+  var combos = [
+    {b1:2, syx:2, sxx:4, sb:1, sbt:'1', t:2, tt:'2'},
+    {b1:3, syx:3, sxx:9, sb:1, sbt:'1', t:3, tt:'3'},
+    {b1:4, syx:2, sxx:4, sb:1, sbt:'1', t:4, tt:'4'},
+    {b1:5, syx:2, sxx:1, sb:2, sbt:'2', t:2.5, tt:'5/2'},
+    {b1:2, syx:4, sxx:4, sb:2, sbt:'2', t:1, tt:'1'},
+    {b1:3, syx:6, sxx:9, sb:2, sbt:'2', t:1.5, tt:'3/2'},
+    {b1:4, syx:4, sxx:4, sb:2, sbt:'2', t:2, tt:'2'},
+    {b1:6, syx:3, sxx:1, sb:3, sbt:'3', t:2, tt:'2'}
+  ];
+  var c = sel(combos);
+  var raiz = Math.sqrt(c.sxx);
+  var ctx = sel([
+    'Diego José, doctorando en IA, prueba la utilidad de un modelo de regresión para la población',
+    'En un proyecto con comunidades rurales, Leonardo evalúa si la pendiente poblacional es cero',
+    'Francisco, ingeniero en innovación, contrasta $H_0:\\beta_1=0$ frente a $H_1:\\beta_1\\ne 0$'
+  ]);
+  var problema = ctx + '. En un ajuste por mínimos cuadrados se obtuvo pendiente $b_1=' + c.b1 + '$, error estándar de la estimación $s_{yx}=' + c.syx + '$ y suma $\\sum(x-\\bar{x})^2=' + c.sxx + '$. Calcula el estadístico $t=\\dfrac{b_1}{s_b}$ para la prueba de utilidad del modelo.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El estadístico es $t=\\dfrac{' + c.b1 + '}{' + c.sbt + '}=' + c.tt + '$.',
+    respuestaLaTeX: 't = ' + c.tt,
+    acepta: [c.tt, String(c.t), c.t.toFixed(2), c.t.toFixed(3)],
+    respuesta: c.t,
+    tolerancia: 0.001,
+    pista: 'Primero calcula el error estándar del coeficiente $s_b=\\dfrac{s_{yx}}{\\sqrt{\\sum(x-\\bar{x})^2}}$ y luego divide $b_1$ entre $s_b$.',
+    explicacion: 'Paso 1. Identifica $b_1=' + c.b1 + '$, $s_{yx}=' + c.syx + '$ y $\\sum(x-\\bar{x})^2=' + c.sxx + '$. Paso 2. Calcula $\\sqrt{\\sum(x-\\bar{x})^2}=\\sqrt{' + c.sxx + '}=' + raiz + '$. Paso 3. Error estándar del coeficiente: $s_b=\\dfrac{' + c.syx + '}{' + raiz + '}=' + c.sbt + '$. Paso 4. Estadístico: $t=\\dfrac{' + c.b1 + '}{' + c.sbt + '}=' + c.tt + '$.'
+  };
+}
+
+// Variante 13: residuo específico e_i (numeric)
+function vResiduo(){
+  var a = rnd(1,4);
+  var b = rnd(0,4);
+  var x = rnd(1,5);
+  var yhat = a*x + b;
+  var e = sel([-2,-1,0,1,2]);
+  var y = yhat + e;
+  var ctx = sel([
+    'Paulo, ingeniero en IA, inspecciona los residuos de un modelo de regresión',
+    'En un proyecto mecatrónico, Enrique verifica la calidad del ajuste revisando un residuo',
+    'Sergio, en un colectivo de innovación, audita las predicciones de un modelo lineal'
+  ]);
+  var problema = ctx + '. El modelo ajustado es $\\hat{y}=' + a + 'x+' + b + '$. Para el punto observado $(' + x + ',' + y + ')$, calcula el residuo $e_i=y_i-\\hat{y}_i$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El residuo es $e_i=' + y + '-(' + a + '\\cdot' + x + '+' + b + ')=' + y + '-' + yhat + '=' + e + '$.',
+    respuestaLaTeX: 'e_i = ' + e,
+    acepta: [String(e), e + '.0'],
+    respuesta: e,
+    tolerancia: 0.001,
+    pista: 'Sustituye el valor de $x$ en la recta para obtener $\\hat{y}_i$ y réstalo del valor observado $y_i$.',
+    explicacion: 'Paso 1. Sustituye $x=' + x + '$ en el modelo: $\\hat{y}_i=' + a + '\\cdot' + x + '+' + b + '=' + yhat + '$. Paso 2. Toma el valor observado $y_i=' + y + '$. Paso 3. Resta: $e_i=y_i-\\hat{y}_i=' + y + '-' + yhat + '=' + e + '$. Paso 4. Un residuo positivo indica que el modelo subestima $y$ en ese punto.'
+  };
+}
+
+// Variante 14: grados de libertad en regresión lineal simple (numeric)
+function vGL(){
+  var n = rnd(5, 30);
+  var gl = n - 2;
+  var ctx = sel([
+    'Samuel, estudiante de Ingeniería en IA, plantea una prueba de hipótesis para regresión',
+    'En un proyecto de innovación, el equipo de Fanny necesita los grados de libertad de un contraste',
+    'Leonardo, en un taller de estadística aplicada, identifica los grados de libertad del estadístico $t$'
+  ]);
+  var problema = ctx + '. En un ajuste de regresión lineal simple con $n=' + n + '$ observaciones, ¿cuántos grados de libertad se usan en la distribución $t$-Student para la prueba de utilidad del modelo?';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'Los grados de libertad son $n-2=' + n + '-2=' + gl + '$.',
+    respuestaLaTeX: '\\text{gl} = ' + gl,
+    acepta: [String(gl), gl + '.0'],
+    respuesta: gl,
+    tolerancia: 0.001,
+    pista: 'En regresión lineal simple se estiman dos parámetros ($b_0$ y $b_1$), por lo que los grados de libertad son $n-2$.',
+    explicacion: 'Paso 1. Recuerda que el modelo de regresión lineal simple estima dos parámetros: el intercepto $\\beta_0$ y la pendiente $\\beta_1$. Paso 2. Cada parámetro estimado consume un grado de libertad. Paso 3. Por tanto, los grados de libertad son $n-2=' + n + '-2=' + gl + '$. Paso 4. Este valor se usa para buscar el valor crítico $t_{\\text{tablas}}$ en la distribución $t$-Student.'
+  };
+}
+
+// Variante 15: fórmula simbólica del coeficiente de determinación con residuos (symbolic)
+function vFormulaR2(){
+  var ctx = sel([
+    'En un seminario de innovación, Sebastián expone la fórmula del coeficiente de determinación desde los residuos',
+    'Paulo, ingeniero mecatrónico, documenta cómo se obtiene $r^2$ a partir de las sumas de cuadrados',
+    'El colectivo de innovación digital prepara material sobre la calidad del ajuste lineal'
+  ]);
+  var problema = ctx + '. Escribe la fórmula del coeficiente de determinación $r^2$ en términos de la suma de cuadrados de los residuos $SCE=\\sum(y-\\hat{y})^2$ y la suma de cuadrados total $STC=\\sum(y-\\bar{y})^2$.';
+  return {
+    tipo:'simbolica',
+    problema: problema,
+    solucion: 'La fórmula es $r^2=1-\\dfrac{\\sum(y-\\hat{y})^2}{\\sum(y-\\bar{y})^2}=1-\\dfrac{SCE}{STC}$.',
+    respuestaLaTeX: 'r^2 = 1 - \\dfrac{SCE}{STC}',
+    acepta: [
+      '1-SCE/STC',
+      '1-(SCE)/(STC)',
+      '1-\\frac{SCE}{STC}',
+      '1-\\dfrac{SCE}{STC}',
+      '1-SCE/STC'
+    ],
+    pista: 'El cociente $\\dfrac{SCE}{STC}$ representa la fracción de variabilidad NO explicada por el modelo; el coeficiente $r^2$ es el complemento a 1.',
+    explicacion: 'Paso 1. La variabilidad total de $y$ respecto a su media es $STC=\\sum(y-\\bar{y})^2$. Paso 2. La variabilidad no explicada por el modelo es $SCE=\\sum(y-\\hat{y})^2$. Paso 3. El cociente $\\dfrac{SCE}{STC}$ es la proporción no explicada. Paso 4. Por tanto $r^2=1-\\dfrac{SCE}{STC}$, la proporción de variabilidad explicada por el modelo.'
+  };
+}
+
+// Variante 16: fórmula simbólica del error estándar de la estimación (symbolic)
+function vFormulaSyx(){
+  var ctx = sel([
+    'Humberto, doctorando en IA, documentará la fórmula del error estándar de la estimación',
+    'En un seminario de estadística aplicada, Daniel explica cómo medir la dispersión residual',
+    'El equipo de innovación digital de Leonardo redacta el procedimiento de validación del modelo'
+  ]);
+  var problema = ctx + '. Escribe la fórmula del error estándar de la estimación $s_{yx}$ en regresión lineal simple, en términos de la suma de cuadrados de los residuos $SCE=\\sum(y-\\hat{y})^2$ y del tamaño muestral $n$.';
+  return {
+    tipo:'simbolica',
+    problema: problema,
+    solucion: 'La fórmula es $s_{yx}=\\sqrt{\\dfrac{\\sum(y-\\hat{y})^2}{n-2}}=\\sqrt{\\dfrac{SCE}{n-2}}$.',
+    respuestaLaTeX: 's_{yx} = \\sqrt{\\dfrac{SCE}{n-2}}',
+    acepta: [
+      'sqrt(SCE/(n-2))',
+      '(SCE/(n-2))^0.5',
+      '(SCE/(n-2))^(1/2)',
+      '\\sqrt{\\frac{SCE}{n-2}}',
+      '\\sqrt{\\dfrac{SCE}{n-2}}',
+      'sqrt(SCE/(n-2))'
+    ],
+    pista: 'Es la raíz cuadrada de la suma de cuadrados de los residuos dividida entre los grados de libertad $n-2$.',
+    explicacion: 'Paso 1. La variabilidad residual se mide con $SCE=\\sum(y-\\hat{y})^2$. Paso 2. Los grados de libertad son $n-2$ porque se estiman $\\beta_0$ y $\\beta_1$. Paso 3. La varianza residual es $\\dfrac{SCE}{n-2}$. Paso 4. El error estándar es $s_{yx}=\\sqrt{\\dfrac{SCE}{n-2}}$.'
+  };
+}
+
+// Variante 17: fórmula simbólica del estadístico t para la correlación (symbolic)
+function vFormulaTcorr(){
+  var ctx = sel([
+    'Rafael, estudiante de IA, redacta la fórmula del estadístico para la prueba del coeficiente de correlación',
+    'En un taller de estadística aplicada, Humberto explica el contraste $H_0:P=0$',
+    'Paulo, en un proyecto intercultural, documenta la prueba de significancia de $r$'
+  ]);
+  var problema = ctx + '. Escribe la fórmula del estadístico de prueba $t$ para la prueba del coeficiente de correlación, en términos de $r$ y $n$.';
+  return {
+    tipo:'simbolica',
+    problema: problema,
+    solucion: 'La fórmula es $t=\\dfrac{r}{\\sqrt{\\dfrac{1-r^2}{n-2}}}=\\dfrac{r\\sqrt{n-2}}{\\sqrt{1-r^2}}$.',
+    respuestaLaTeX: 't = \\dfrac{r}{\\sqrt{\\dfrac{1-r^2}{n-2}}}',
+    acepta: [
+      'r/sqrt((1-r^2)/(n-2))',
+      'r*sqrt(n-2)/sqrt(1-r^2)',
+      'rsqrt(n-2)/sqrt(1-r^2)',
+      'r/sqrt(1-r^2)*sqrt(n-2)',
+      '(r*sqrt(n-2))/sqrt(1-r^2)'
+    ],
+    pista: 'Es el cociente entre $r$ y su error estándar $s_r=\\sqrt{\\dfrac{1-r^2}{n-2}}$, con $n-2$ grados de libertad.',
+    explicacion: 'Paso 1. Bajo $H_0:P=0$, el estadístico sigue una $t$-Student con $n-2$ grados de libertad. Paso 2. El error estándar de $r$ es $s_r=\\sqrt{\\dfrac{1-r^2}{n-2}}$. Paso 3. El estadístico es $t=\\dfrac{r-0}{s_r}=\\dfrac{r}{\\sqrt{\\dfrac{1-r^2}{n-2}}}$. Paso 4. Equivalentemente, $t=\\dfrac{r\\sqrt{n-2}}{\\sqrt{1-r^2}}$.'
+  };
+}
+
+// ============ ESTIMACIÓN POR MÁXIMA VEROSIMILITUD ============
+
+// Variante 18: MLE para Bernoulli - proporción p (numeric)
+function vBernoulliMLE(){
+  var datasets = [
+    {n:10, k:6, p:0.6, pt:'3/5'},
+    {n:8, k:6, p:0.75, pt:'3/4'},
+    {n:5, k:4, p:0.8, pt:'4/5'},
+    {n:10, k:5, p:0.5, pt:'1/2'},
+    {n:12, k:9, p:0.75, pt:'3/4'},
+    {n:20, k:15, p:0.75, pt:'3/4'},
+    {n:6, k:2, p:1/3, pt:'1/3'},
+    {n:10, k:7, p:0.7, pt:'7/10'}
+  ];
+  var d = sel(datasets);
+  var ctx = sel([
+    'Humberto, gerente de marketing, estima la proporción de clientes que aceptarían una promoción',
+    'Maria Andrea, analista de negocios, evalúa la aceptación de un nuevo producto digital',
+    'Leonardo, consultor de innovación, mide la tasa de respuesta a una campaña publicitaria'
+  ]);
+  var problema = ctx + '. En una muestra de $n=' + d.n + '$ clientes, ' + d.k + ' aceptaron. Suponiendo $X_i \\sim \\text{Bernoulli}(p)$, calcula el estimador de máxima verosimilitud $\\hat{p}_{MV}$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El estimador es $\\hat{p}_{MV} = \\dfrac{' + d.k + '}{' + d.n + '} = ' + d.pt + '$.',
+    respuestaLaTeX: '\\hat{p}_{MV} = ' + d.pt,
+    acepta: [d.pt, String(d.p), d.p.toFixed(2), d.p.toFixed(4), d.k + '/' + d.n],
+    respuesta: d.p,
+    tolerancia: 0.001,
+    pista: 'Para una muestra Bernoulli, el estimador MV de $p$ es la proporción de éxitos: $\\hat{p}_{MV} = \\dfrac{\\sum x_i}{n} = \\bar{X}$.',
+    explicacion: 'Paso 1. La función de verosimilitud es $V(p) = p^{\\sum x_i}(1-p)^{n-\\sum x_i} = p^{' + d.k + '}(1-p)^{' + (d.n-d.k) + '}$. Paso 2. Log-verosimilitud: $\\ell(p) = ' + d.k + '\\ln p + ' + (d.n-d.k) + '\\ln(1-p)$. Paso 3. Derivada: $\\dfrac{d\\ell}{dp} = \\dfrac{' + d.k + '}{p} - \\dfrac{' + (d.n-d.k) + '}{1-p}$. Paso 4. Igualando a cero: $' + d.k + '(1-p) = ' + (d.n-d.k) + 'p$, de donde $\\hat{p}_{MV} = \\dfrac{' + d.k + '}{' + d.n + '} = ' + d.pt + '$.'
+  };
+}
+
+// Variante 19: MLE para Poisson - parámetro λ (numeric)
+function vPoissonMLE(){
+  var datasets = [
+    {data:[14,11,17,12,15,11], sum:80, n:6, lam:80/6, lamt:'40/3'},
+    {data:[3,5,7,5], sum:20, n:4, lam:5, lamt:'5'},
+    {data:[2,4,6], sum:12, n:3, lam:4, lamt:'4'},
+    {data:[10,20], sum:30, n:2, lam:15, lamt:'15'},
+    {data:[8,12,10], sum:30, n:3, lam:10, lamt:'10'},
+    {data:[5,7,9,7,12], sum:40, n:5, lam:8, lamt:'8'},
+    {data:[4,6,8,2], sum:20, n:4, lam:5, lamt:'5'}
+  ];
+  var d = sel(datasets);
+  var ctx = sel([
+    'Paulo, gerente de sucursal bancaria, registra el número de clientes que llegan por hora',
+    'Sebastián, ingeniero de tráfico, analiza el flujo de vehículos en un peaje',
+    'Daniel, analista de operaciones, estudia las llegadas a un centro de servicio'
+  ]);
+  var dataStr = d.data.join(', ');
+  var problema = ctx + '. En $n=' + d.n + '$ horas observó los valores: ' + dataStr + '. Suponiendo $X_i \\sim \\text{Poisson}(\\lambda)$, calcula el estimador de máxima verosimilitud $\\hat{\\lambda}_{MV}$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El estimador es $\\hat{\\lambda}_{MV} = \\bar{X} = \\dfrac{' + d.sum + '}{' + d.n + '} = ' + d.lamt + '$.',
+    respuestaLaTeX: '\\hat{\\lambda}_{MV} = ' + d.lamt,
+    acepta: [d.lamt, String(d.lam), d.lam.toFixed(2), d.lam.toFixed(3), d.lam.toFixed(4), d.sum + '/' + d.n],
+    respuesta: d.lam,
+    tolerancia: 0.001,
+    pista: 'Para una muestra Poisson, el estimador MV de $\\lambda$ es la media muestral: $\\hat{\\lambda}_{MV} = \\bar{X} = \\dfrac{\\sum x_i}{n}$.',
+    explicacion: 'Paso 1. La verosimilitud es $V(\\lambda) = \\dfrac{e^{-n\\lambda}\\lambda^{\\sum x_i}}{\\prod x_i!}$. Paso 2. Log-verosimilitud: $\\ell(\\lambda) = -n\\lambda + (\\sum x_i)\\ln\\lambda - \\sum \\ln(x_i!)$. Paso 3. Derivada: $\\dfrac{d\\ell}{d\\lambda} = -n + \\dfrac{\\sum x_i}{\\lambda}$. Paso 4. Igualando a cero: $\\hat{\\lambda}_{MV} = \\dfrac{\\sum x_i}{n} = \\dfrac{' + d.sum + '}{' + d.n + '} = ' + d.lamt + '$.'
+  };
+}
+
+// Variante 20: MLE para Exponencial - parámetro λ (numeric)
+function vExpMLE(){
+  var datasets = [
+    {data:[2,4,3,5,1], sum:15, n:5, lam:1/3, lamt:'1/3'},
+    {data:[3,3,3,3], sum:12, n:4, lam:1/3, lamt:'1/3'},
+    {data:[1,2,3], sum:6, n:3, lam:1/2, lamt:'1/2'},
+    {data:[2,4,6], sum:12, n:3, lam:1/4, lamt:'1/4'},
+    {data:[4,6,8,2], sum:20, n:4, lam:1/5, lamt:'1/5'},
+    {data:[5,5,5,5], sum:20, n:4, lam:1/5, lamt:'1/5'},
+    {data:[2,2,2], sum:6, n:3, lam:1/2, lamt:'1/2'},
+    {data:[1,1,1,1], sum:4, n:4, lam:1, lamt:'1'},
+    {data:[3,6,9], sum:18, n:3, lam:1/6, lamt:'1/6'}
+  ];
+  var d = sel(datasets);
+  var ctx = sel([
+    'Nelson, supervisor de un call center, registra los tiempos de espera de los clientes',
+    'Constanza, ingeniera de procesos, mide los tiempos entre fallos de una máquina',
+    'Diego José, analista de operaciones, estudia los tiempos de servicio en una cafetería'
+  ]);
+  var dataStr = d.data.join(', ');
+  var problema = ctx + '. En minutos, los tiempos observados son: ' + dataStr + '. Suponiendo $X_i \\sim \\text{Exponencial}(\\lambda)$, calcula el estimador de máxima verosimilitud $\\hat{\\lambda}_{MV}$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El estimador es $\\hat{\\lambda}_{MV} = \\dfrac{1}{\\bar{X}} = \\dfrac{' + d.n + '}{' + d.sum + '} = ' + d.lamt + '$.',
+    respuestaLaTeX: '\\hat{\\lambda}_{MV} = ' + d.lamt,
+    acepta: [d.lamt, String(d.lam), d.lam.toFixed(2), d.lam.toFixed(4), d.n + '/' + d.sum, '1/' + (d.sum/d.n)],
+    respuesta: d.lam,
+    tolerancia: 0.001,
+    pista: 'Para una muestra exponencial, el estimador MV de $\\lambda$ es el inverso de la media muestral: $\\hat{\\lambda}_{MV} = \\dfrac{1}{\\bar{X}} = \\dfrac{n}{\\sum x_i}$.',
+    explicacion: 'Paso 1. La densidad es $f(x;\\lambda) = \\lambda e^{-\\lambda x}$. La verosimilitud es $V(\\lambda) = \\lambda^n e^{-\\lambda \\sum x_i}$. Paso 2. Log-verosimilitud: $\\ell(\\lambda) = n\\ln\\lambda - \\lambda\\sum x_i$. Paso 3. Derivada: $\\dfrac{d\\ell}{d\\lambda} = \\dfrac{n}{\\lambda} - \\sum x_i$. Paso 4. Igualando a cero: $\\hat{\\lambda}_{MV} = \\dfrac{n}{\\sum x_i} = \\dfrac{' + d.n + '}{' + d.sum + '} = ' + d.lamt + '$.'
+  };
+}
+
+// Variante 21: MLE para Normal con varianza conocida - media μ (numeric)
+function vNormalMuMLE(){
+  var datasets = [
+    {data:[18,21,19,22,20], mean:20, n:5, sigma2:16},
+    {data:[10,20,30], mean:20, n:3, sigma2:25},
+    {data:[5,10,15], mean:10, n:3, sigma2:9},
+    {data:[4,8,12], mean:8, n:3, sigma2:4},
+    {data:[12,14,16,18], mean:15, n:4, sigma2:16},
+    {data:[7,7,7,7], mean:7, n:4, sigma2:1},
+    {data:[3,7,11], mean:7, n:3, sigma2:4},
+    {data:[8,12,16,20], mean:14, n:4, sigma2:9}
+  ];
+  var d = sel(datasets);
+  var ctx = sel([
+    'Francisco, gerente de ventas, analiza la demanda diaria de un producto',
+    'Fanny, ingeniera de calidad, mide las dimensiones de piezas fabricadas',
+    'Raúl, analista de logística, registra los tiempos de entrega de pedidos'
+  ]);
+  var dataStr = d.data.join(', ');
+  var problema = ctx + '. Con varianza conocida $\\sigma^2 = ' + d.sigma2 + '$, los datos observados son: ' + dataStr + '. Suponiendo $X_i \\sim N(\\mu, ' + d.sigma2 + ')$, calcula el estimador de máxima verosimilitud $\\hat{\\mu}_{MV}$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El estimador es $\\hat{\\mu}_{MV} = \\bar{X} = ' + d.mean + '$.',
+    respuestaLaTeX: '\\hat{\\mu}_{MV} = ' + d.mean,
+    acepta: [String(d.mean), d.mean + '.0', d.mean + '.00'],
+    respuesta: d.mean,
+    tolerancia: 0.001,
+    pista: 'Para una muestra normal con varianza conocida, el estimador MV de $\\mu$ es la media muestral: $\\hat{\\mu}_{MV} = \\bar{X}$.',
+    explicacion: 'Paso 1. La densidad normal es $f(x;\\mu) = \\dfrac{1}{\\sqrt{2\\pi\\sigma^2}} e^{-\\frac{(x-\\mu)^2}{2\\sigma^2}}$. Paso 2. Log-verosimilitud: $\\ell(\\mu) = -\\dfrac{n}{2}\\ln(2\\pi\\sigma^2) - \\dfrac{1}{2\\sigma^2}\\sum(x_i-\\mu)^2$. Paso 3. Derivada: $\\dfrac{d\\ell}{d\\mu} = \\dfrac{1}{\\sigma^2}\\sum(x_i-\\mu)$. Paso 4. Igualando a cero: $\\sum x_i - n\\mu = 0$, de donde $\\hat{\\mu}_{MV} = \\bar{X} = ' + d.mean + '$.'
+  };
+}
+
+// Variante 22: MLE para Normal con μ y σ² desconocidos - varianza σ² (numeric)
+function vNormalSigma2MLE(){
+  var datasets = [
+    {data:[18,21,19,22,20], mean:20, n:5, s2:2},
+    {data:[2,4,6,8], mean:5, n:4, s2:5},
+    {data:[1,3,5,7], mean:4, n:4, s2:5},
+    {data:[10,12,14,16], mean:13, n:4, s2:5},
+    {data:[2,2,6,6], mean:4, n:4, s2:4},
+    {data:[1,5], mean:3, n:2, s2:4},
+    {data:[3,9], mean:6, n:2, s2:9},
+    {data:[1,3,5,7,9], mean:5, n:5, s2:8},
+    {data:[4,4,8,8], mean:6, n:4, s2:4},
+    {data:[6,6,10,10], mean:8, n:4, s2:4}
+  ];
+  var d = sel(datasets);
+  var ctx = sel([
+    'Rafael, gerente de operaciones, analiza la variabilidad de los tiempos de entrega',
+    'Luis Mario, ingeniero de calidad, estudia la dispersión de las medidas de un producto',
+    'Sergio, analista de datos, evalúa la variabilidad de los rendimientos de un proceso'
+  ]);
+  var dataStr = d.data.join(', ');
+  var problema = ctx + '. Con $\\mu$ y $\\sigma^2$ desconocidos, los datos observados son: ' + dataStr + '. Suponiendo $X_i \\sim N(\\mu, \\sigma^2)$, calcula el estimador de máxima verosimilitud $\\hat{\\sigma}^2_{MV}$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El estimador es $\\hat{\\sigma}^2_{MV} = \\dfrac{1}{n}\\sum(x_i - \\bar{x})^2 = ' + d.s2 + '$.',
+    respuestaLaTeX: '\\hat{\\sigma}^2_{MV} = ' + d.s2,
+    acepta: [String(d.s2), d.s2 + '.0', d.s2 + '.00'],
+    respuesta: d.s2,
+    tolerancia: 0.001,
+    pista: 'El estimador MV de $\\sigma^2$ es $\\hat{\\sigma}^2_{MV} = \\dfrac{1}{n}\\sum_{i=1}^n (x_i - \\bar{x})^2$. IMPORTANTE: divide entre $n$, no entre $n-1$.',
+    explicacion: 'Paso 1. Con $\\mu$ y $\\sigma^2$ desconocidos, se derivan dos ecuaciones. La derivada respecto a $\\mu$ da $\\hat{\\mu}_{MV} = \\bar{X} = ' + d.mean + '$. Paso 2. La derivada respecto a $\\sigma^2$ da $-\\dfrac{n}{2\\sigma^2} + \\dfrac{\\sum(x_i-\\mu)^2}{2(\\sigma^2)^2} = 0$. Paso 3. Despejando: $\\sigma^2 = \\dfrac{1}{n}\\sum(x_i - \\bar{x})^2$. Paso 4. Sustituyendo los datos: $\\hat{\\sigma}^2_{MV} = ' + d.s2 + '$ (recuerda: divide entre $n$, no entre $n-1$).'
+  };
+}
+
+// Variante 23: fórmula simbólica del estimador MV según distribución (symbolic)
+function vFormulaMLE(){
+  var opciones = [
+    {dist:'Poisson', param:'\\lambda', acepta:['xbar', 'media', 'sum(xi)/n', 'sumxi/n', '(sum(xi))/(n)', '(sumxi)/(n)'], tex:'\\hat{\\lambda}_{MV} = \\bar{X} = \\dfrac{\\sum x_i}{n}'},
+    {dist:'Bernoulli', param:'p', acepta:['xbar', 'media', 'sum(xi)/n', 'sumxi/n', '(sum(xi))/(n)'], tex:'\\hat{p}_{MV} = \\bar{X} = \\dfrac{\\sum x_i}{n}'},
+    {dist:'Exponencial', param:'\\lambda', acepta:['1/xbar', '1/media', 'n/sum(xi)', 'n/sumxi', '(n)/(sumxi)', '(n)/(sum(xi))'], tex:'\\hat{\\lambda}_{MV} = \\dfrac{1}{\\bar{X}} = \\dfrac{n}{\\sum x_i}'}
+  ];
+  var o = sel(opciones);
+  var ctx = sel([
+    'Alejandra, estudiante de posgrado, redacta el estimador de máxima verosimilitud',
+    'Diego, investigador de operaciones, documenta los resultados teóricos de estimación MV',
+    'Enrique, profesor de estadística, prepara material sobre estimación por máxima verosimilitud'
+  ]);
+  var problema = ctx + '. Escribe el estimador de máxima verosimilitud de $' + o.param + '$ para una muestra aleatoria de una distribución ' + o.dist + ', en términos de $\\bar{X}$ o de $\\sum x_i$ y $n$.';
+  return {
+    tipo:'simbolica',
+    problema: problema,
+    solucion: 'El estimador es $' + o.tex + '$.',
+    respuestaLaTeX: o.tex,
+    acepta: o.acepta,
+    pista: 'Recuerda que para Poisson y Bernoulli el estimador MV es la media muestral $\\bar{X}$; para la exponencial es el inverso de la media.',
+    explicacion: 'Paso 1. Construye la función de verosimilitud $V(\\theta) = \\prod f(x_i; \\theta)$. Paso 2. Toma logaritmo: $\\ell(\\theta) = \\ln V(\\theta)$. Paso 3. Deriva respecto al parámetro e iguala a cero. Paso 4. Para la distribución ' + o.dist + ' el resultado es $' + o.tex + '$.'
+  };
+}
+
+function gen(){
+  var variantes = [vPendiente, vIntercepto, vPrediccionSimple, vPrediccionMultiple, vR2, vFormulaPendiente, vSSE, vCorrelacion, vTcorrelacion, vR2residuos, vSyx, vTutilidad, vResiduo, vGL, vFormulaR2, vFormulaSyx, vFormulaTcorr, vBernoulliMLE, vPoissonMLE, vExpMLE, vNormalMuMLE, vNormalSigma2MLE, vFormulaMLE];
+  var idx = Math.floor(Math.random()*variantes.length);
+  return variantes[idx]();
+}
+
+// ============ UI ============
+function nuevoEjercicio(){
+  ejActual = gen();
+  var en = document.getElementById('enunciado');
+  en.innerHTML = '<p>' + ejActual.problema + '</p>';
+  tiposet(en);
+  var fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  fb.innerHTML = '';
+  document.getElementById('pistaBox').className = 'panel pista';
+  document.getElementById('explicacionBox').className = 'panel explicacion';
+  document.getElementById('respuesta').value = '';
+  setTimeout(function(){ document.getElementById('respuesta').focus(); }, 50);
+}
+
+function verificar(){
+  if(!ejActual) return;
+  var entrada = document.getElementById('respuesta').value.trim();
+  if(!entrada) return;
+  intentos++;
+  document.getElementById('mInt').textContent = intentos;
+  var ok = false;
+  if(ejActual.tipo === 'numerica'){
+    var num = aNumero(entrada);
+    if(!isNaN(num) && Math.abs(num - ejActual.respuesta) <= ejActual.tolerancia){
+      ok = true;
+    } else {
+      ok = coincideTexto(entrada, ejActual.acepta);
+    }
+  } else {
+    ok = coincideTexto(entrada, ejActual.acepta);
+  }
+  var fb = document.getElementById('feedback');
+  if(ok){
+    aciertos++;
+    document.getElementById('mArc').textContent = aciertos;
+    fb.className = 'feedback ok';
+    fb.innerHTML =
+      '<div><strong>✓ ¡Correcto!</strong></div>' +
+      '<div>Escribiste: <code>' + escaparHTML(entrada) + '</code></div>' +
+      '<div>En notación matemática: $' + ejActual.respuestaLaTeX + '$</div>';
+  } else {
+    fb.className = 'feedback err';
+    fb.innerHTML = '<div>✗ Todavía no. Revisa tu procedimiento o pide una pista.</div>';
+  }
+  tiposet(fb);
+}
+
+function mostrarPista(){
+  if(!ejActual) return;
+  var p = document.getElementById('pistaBox');
+  p.innerHTML = '<p>' + ejActual.pista + '</p>';
+  p.className = 'panel pista visible';
+  tiposet(p);
+}
+
+function mostrarExplicacion(){
+  if(!ejActual) return;
+  var e = document.getElementById('explicacionBox');
+  e.innerHTML = '<p>' + ejActual.explicacion + '</p>';
+  e.className = 'panel explicacion visible';
+  tiposet(e);
+}
+
+// ============ ATAJOS DE TECLADO ============
+document.getElementById('respuesta').addEventListener('keydown', function(ev){
+  if(ev.key === 'Enter'){ ev.preventDefault(); verificar(); }
+});
+document.addEventListener('keydown', function(ev){
+  var tag = document.activeElement.tagName;
+  if((ev.key === 'n' || ev.key === 'N') && tag !== 'INPUT' && tag !== 'TEXTAREA'){
+    nuevoEjercicio();
+  }
+});
+
+// ============ ARRANQUE ============
+nuevoEjercicio();
+</script>
+</body>
+</html>
