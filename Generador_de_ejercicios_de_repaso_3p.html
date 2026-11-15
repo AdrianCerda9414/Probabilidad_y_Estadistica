@@ -94,7 +94,7 @@ code{background:rgba(255,255,255,0.55); padding:1px 6px; border-radius:4px; font
   <div class="card">
     <div class="card-header">
       <h1>Generador infinito de ejercicios</h1>
-      <p>Materia: Probabilidad y Estadística · Tema: Regresión lineal simple y múltiple, y estimación por máxima verosimilitud</p>
+      <p>Materia: Probabilidad y Estadística · Tema: Regresión lineal simple y múltiple, máxima verosimilitud y mínimos cuadrados matriciales</p>
     </div>
     <div class="card-body">
       <div class="btn-row">
@@ -117,7 +117,7 @@ code{background:rgba(255,255,255,0.55); padding:1px 6px; border-radius:4px; font
       </div>
     </div>
   </div>
-  <footer>Generador aleatorio educativo · Probabilidad y Estadística · Regresión lineal simple y múltiple, y estimación por máxima verosimilitud</footer>
+  <footer>Generador aleatorio educativo · Probabilidad y Estadística · Regresión lineal simple y múltiple, máxima verosimilitud y mínimos cuadrados matriciales</footer>
 </div>
 <script>
 // ============ ESTADO ============
@@ -902,8 +902,209 @@ function vFormulaMLE(){
   };
 }
 
+
+// ============ MÍNIMOS CUADRADOS MATRICIALES Y PSEUDOINVERSA ============
+
+// Variante 24: fórmula simbólica de la pseudoinversa de Moore-Penrose (symbolic)
+function vPseudoinversaFormula(){
+  var ctx = sel([
+    'Samuel, estudiante de Ingeniería en IA, documenta el método matricial de mínimos cuadrados',
+    'Constanza, investigadora de operaciones, explica la solución de sistemas sobredeterminados',
+    'Humberto, profesor de álgebra lineal, introduce la pseudoinversa en el curso de estadística'
+  ]);
+  var problema = ctx + '. Escribe la fórmula de la pseudoinversa de Moore-Penrose $A^\\dagger$ para resolver el sistema $A\\mathbf{x}=\\mathbf{b}$ por mínimos cuadrados, en términos de $A$, $A^T$ y operaciones matriciales.';
+  return {
+    tipo:'simbolica',
+    problema: problema,
+    solucion: 'La fórmula es $A^\\dagger = (A^T A)^{-1} A^T$.',
+    respuestaLaTeX: 'A^\\dagger = (A^T A)^{-1} A^T',
+    acepta: [
+      '(ATA)^(-1)*AT', '(ATA)^-1*AT', '(ATA)^{-1}*AT', '(ATA)^{-1}AT',
+      '(A^T*A)^(-1)*A^T', '(A^T*A)^-1*A^T', '(A^TA)^{-1}A^T',
+      '(At*A)^(-1)*At', '(At*A)^-1*At'
+    ],
+    pista: 'La pseudoinversa combina la transpuesta $A^T$, el producto $A^T A$, su inversa, y otra transpuesta. El estimador es $\\hat{\\mathbf{x}} = A^\\dagger \\mathbf{b}$.',
+    explicacion: 'Paso 1. Cuando $A$ no es cuadrada (más filas que columnas), el sistema $A\\mathbf{x}=\\mathbf{b}$ no tiene solución exacta. Paso 2. Se busca el $\\mathbf{x}$ que minimiza $\\|A\\mathbf{x}-\\mathbf{b}\\|^2$. Paso 3. Las ecuaciones normales dan $A^T A \\,\\hat{\\mathbf{x}} = A^T \\mathbf{b}$. Paso 4. Despejando: $\\hat{\\mathbf{x}} = (A^T A)^{-1} A^T \\mathbf{b} = A^\\dagger \\mathbf{b}$.'
+  };
+}
+
+// Variante 25: resolver ecuaciones normales dadas A^T*A y A^T*y (numeric)
+function vNormalEqSolve(){
+  var datasets = [
+    {ata11:3, ata12:6, ata22:14, aty1:15, aty2:34, det:6, b0:1, b1:2},
+    {ata11:3, ata12:6, ata22:14, aty1:24, aty2:54, det:6, b0:2, b1:3},
+    {ata11:4, ata12:10, ata22:30, aty1:20, aty2:60, det:20, b0:0, b1:2},
+    {ata11:5, ata12:15, ata22:55, aty1:25, aty2:85, det:50, b0:2, b1:1},
+    {ata11:5, ata12:15, ata22:55, aty1:40, aty2:130, det:50, b0:5, b1:1},
+    {ata11:4, ata12:10, ata22:30, aty1:40, aty2:110, det:20, b0:5, b1:2}
+  ];
+  var d = sel(datasets);
+  var pedir = sel(['b0', 'b1']);
+  var ctx = sel([
+    'Leonardo, ingeniero en IA, resuelve las ecuaciones normales de un ajuste lineal',
+    'Paulo, analista de datos, usa el enfoque matricial para una regresión simple',
+    'Sebastián, estudiante de mecatrónica, ajusta un modelo con álgebra lineal'
+  ]);
+  var matriz = '\\begin{bmatrix} ' + d.ata11 + ' & ' + d.ata12 + ' \\\\ ' + d.ata12 + ' & ' + d.ata22 + ' \\end{bmatrix}';
+  var vector = '\\begin{bmatrix} ' + d.aty1 + ' \\\\ ' + d.aty2 + ' \\end{bmatrix}';
+  var problema = ctx + '. Dadas las ecuaciones normales $A^T A\\,\\hat{\\mathbf{\\beta}} = A^T \\mathbf{y}$ con $A^T A = ' + matriz + '$ y $A^T \\mathbf{y} = ' + vector + '$, calcula ';
+  if(pedir === 'b0'){
+    problema += 'el intercepto $\\hat{\\beta}_0$.';
+  } else {
+    problema += 'la pendiente $\\hat{\\beta}_1$.';
+  }
+  var res = pedir === 'b0' ? d.b0 : d.b1;
+  var resTex = pedir === 'b0' ? '\\hat{\\beta}_0' : '\\hat{\\beta}_1';
+  var formula = pedir === 'b0'
+    ? '\\dfrac{' + d.ata22 + '\\cdot' + d.aty1 + ' - ' + d.ata12 + '\\cdot' + d.aty2 + '}{' + d.det + '}'
+    : '\\dfrac{' + d.ata11 + '\\cdot' + d.aty2 + ' - ' + d.ata12 + '\\cdot' + d.aty1 + '}{' + d.det + '}';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El valor es $' + resTex + ' = ' + formula + ' = ' + res + '$.',
+    respuestaLaTeX: resTex + ' = ' + res,
+    acepta: [String(res), res + '.0', res + '.00'],
+    respuesta: res,
+    tolerancia: 0.001,
+    pista: 'Calcula el determinante $\\det(A^T A) = ' + d.ata11 + '\\cdot' + d.ata22 + ' - ' + d.ata12 + '^2 = ' + d.det + '$ y aplica la regla de Cramer sobre el sistema $2\\times 2$.',
+    explicacion: 'Paso 1. El sistema es $\\begin{bmatrix} ' + d.ata11 + ' & ' + d.ata12 + ' \\\\ ' + d.ata12 + ' & ' + d.ata22 + ' \\end{bmatrix}\\begin{bmatrix} \\hat{\\beta}_0 \\\\ \\hat{\\beta}_1 \\end{bmatrix} = \\begin{bmatrix} ' + d.aty1 + ' \\\\ ' + d.aty2 + ' \\end{bmatrix}$. Paso 2. El determinante es $' + d.det + '$. Paso 3. Por Cramer: $' + resTex + ' = ' + formula + ' = ' + res + '$. Paso 4. La recta ajustada es $\\hat{y} = ' + d.b0 + ' + ' + d.b1 + 'x$.'
+  };
+}
+
+// Variante 26: elemento de A^T*A dada la matriz de diseño (numeric)
+function vATAelement(){
+  var datasets = [
+    {xs:[1,2,3], n:3, sx:6, sx2:14},
+    {xs:[1,2,3,4], n:4, sx:10, sx2:30},
+    {xs:[1,2,3,4,5], n:5, sx:15, sx2:55},
+    {xs:[2,3,4], n:3, sx:9, sx2:29}
+  ];
+  var d = sel(datasets);
+  var pos = sel(['11','12','22']);
+  var ctx = sel([
+    'Daniel, estudiante de Ingeniería en IA, construye la matriz de diseño de una regresión',
+    'Nelson, analista de datos, formula el problema de mínimos cuadrados en notación matricial',
+    'Diego José, investigador de operaciones, prepara el sistema de ecuaciones normales'
+  ]);
+  var filasA = d.xs.map(function(x){ return '1 & ' + x; }).join(' \\\\ ');
+  var problema = ctx + '. La matriz de diseño es $A = \\begin{bmatrix} ' + filasA + ' \\end{bmatrix}$. Calcula el elemento $(' + pos + ')$ de la matriz $A^T A$.';
+  var res, resDesc;
+  if(pos === '11'){ res = d.n; resDesc = 'n = ' + d.n; }
+  else if(pos === '12'){ res = d.sx; resDesc = '\\sum x_i = ' + d.sx; }
+  else { res = d.sx2; resDesc = '\\sum x_i^2 = ' + d.sx2; }
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El elemento $(' + pos + ')$ de $A^T A$ es $' + resDesc + ' = ' + res + '$.',
+    respuestaLaTeX: '(A^T A)_' + pos + ' = ' + res,
+    acepta: [String(res), res + '.0'],
+    respuesta: res,
+    tolerancia: 0.001,
+    pista: '$A^T A = \\begin{bmatrix} n & \\sum x_i \\\\ \\sum x_i & \\sum x_i^2 \\end{bmatrix}$. El elemento $(1,1)$ es $n$, el $(1,2)$ es $\\sum x_i$, y el $(2,2)$ es $\\sum x_i^2$.',
+    explicacion: 'Paso 1. La primera columna de $A$ son unos y la segunda son los valores $x_i$. Paso 2. $A^T A$ calcula productos de columnas: el elemento $(' + pos + ')$ es el producto punto de la columna ' + (pos === '11' ? '1 consigo misma (suma de unos = $n$)' : pos === '12' ? '1 con la columna 2 (suma de $x_i$)' : '2 consigo misma (suma de $x_i^2$)') + '. Paso 3. Con los datos $x = [' + d.xs.join(', ') + ']$: $(' + pos + ') = ' + res + '$.'
+  };
+}
+
+// Variante 27: residuo en regresión múltiple con 2 predictores (numeric)
+function vMultipleResiduo(){
+  var combos = [
+    {b0:2, b1:3, b2:1, x1:1, x2:2, y:7, e:0},
+    {b0:5, b1:2, b2:-1, x1:3, x2:4, y:10, e:3},
+    {b0:10, b1:1, b2:-2, x1:4, x2:2, y:12, e:2},
+    {b0:1, b1:2, b2:3, x1:2, x2:1, y:10, e:2},
+    {b0:3, b1:1, b2:1, x1:5, x2:3, y:12, e:1},
+    {b0:4, b1:3, b2:-2, x1:2, x2:1, y:9, e:1},
+    {b0:6, b1:1, b2:2, x1:3, x2:2, y:14, e:1},
+    {b0:0, b1:2, b2:-1, x1:4, x2:3, y:6, e:1}
+  ];
+  var c = sel(combos);
+  var ctx = sel([
+    'Francisco, ingeniero en IA, audita las predicciones de un modelo de regresión múltiple',
+    'Fanny, analista de calidad, revisa los residuos de un ajuste con dos predictores',
+    'Raúl, estudiante de mecatrónica, verifica un modelo de regresión lineal múltiple'
+  ]);
+  var yhat = c.b0 + c.b1*c.x1 + c.b2*c.x2;
+  var problema = ctx + '. El modelo ajustado es $\\hat{y} = ' + c.b0 + ' + ' + c.b1 + 'x_1' + (c.b2 >= 0 ? ' + ' : ' - ') + Math.abs(c.b2) + 'x_2$. Para la observación $(x_1, x_2, y) = (' + c.x1 + ', ' + c.x2 + ', ' + c.y + ')$, calcula el residuo $e_i = y_i - \\hat{y}_i$.';
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El residuo es $e_i = ' + c.y + ' - (' + c.b0 + ' + ' + c.b1 + '\\cdot' + c.x1 + (c.b2 >= 0 ? ' + ' : ' - ') + Math.abs(c.b2) + '\\cdot' + c.x2 + ') = ' + c.y + ' - ' + yhat + ' = ' + c.e + '$.',
+    respuestaLaTeX: 'e_i = ' + c.e,
+    acepta: [String(c.e), c.e + '.0'],
+    respuesta: c.e,
+    tolerancia: 0.001,
+    pista: 'Sustituye $x_1$ y $x_2$ en el modelo para obtener $\\hat{y}_i$ y réstalo del valor observado $y_i$.',
+    explicacion: 'Paso 1. Sustituye $x_1=' + c.x1 + '$ y $x_2=' + c.x2 + '$: $\\hat{y}_i = ' + c.b0 + ' + ' + c.b1 + '\\cdot' + c.x1 + (c.b2 >= 0 ? ' + ' : ' - ') + Math.abs(c.b2) + '\\cdot' + c.x2 + ' = ' + yhat + '$. Paso 2. Resta del observado: $e_i = ' + c.y + ' - ' + yhat + ' = ' + c.e + '$. Paso 3. Un residuo de ' + (c.e > 0 ? 'signo positivo indica que el modelo subestima $y$ en ese punto' : c.e < 0 ? 'signo negativo indica que el modelo sobreestima $y$' : 'cero indica ajuste perfecto') + '.'
+  };
+}
+
+// Variante 28: identificación de coeficientes del vector beta (numeric)
+function vMultipleCoef(){
+  var combos = [
+    {b:[5,2,-3], labels:['el intercepto $\\hat{\\beta}_0$','el coeficiente de $x_1$','el coeficiente de $x_2$'], ans:[5,2,-3]},
+    {b:[10,3,1], labels:['el intercepto $\\hat{\\beta}_0$','el coeficiente de $x_1$','el coeficiente de $x_2$'], ans:[10,3,1]},
+    {b:[2,-1,4], labels:['el intercepto $\\hat{\\beta}_0$','el coeficiente de $x_1$','el coeficiente de $x_2$'], ans:[2,-1,4]},
+    {b:[0,2,3], labels:['el intercepto $\\hat{\\beta}_0$','el coeficiente de $x_1$','el coeficiente de $x_2$'], ans:[0,2,3]},
+    {b:[7,1,-2], labels:['el intercepto $\\hat{\\beta}_0$','el coeficiente de $x_1$','el coeficiente de $x_2$'], ans:[7,1,-2]}
+  ];
+  var c = sel(combos);
+  var idx = sel([0,1,2]);
+  var ctx = sel([
+    'Rafael, estudiante de IA, interpreta el vector de coeficientes de una regresión múltiple',
+    'Luis Mario, ingeniero mecatrónico, analiza los parámetros de un modelo con dos predictores',
+    'Sergio, analista de operaciones, revisa el vector $\\hat{\\mathbf{\\beta}}$ de un ajuste lineal múltiple'
+  ]);
+  var betaVec = '\\begin{bmatrix} ' + c.b[0] + ' \\\\ ' + c.b[1] + ' \\\\ ' + c.b[2] + ' \\end{bmatrix}';
+  var problema = ctx + '. El vector de coeficientes estimados es $\\hat{\\mathbf{\\beta}} = ' + betaVec + '$ para el modelo $\\hat{y} = \\hat{\\beta}_0 + \\hat{\\beta}_1 x_1 + \\hat{\\beta}_2 x_2$. ¿Cuál es ' + c.labels[idx] + '?';
+  var res = c.ans[idx];
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El valor pedido es $' + res + '$.',
+    respuestaLaTeX: String(res),
+    acepta: [String(res), res + '.0'],
+    respuesta: res,
+    tolerancia: 0.001,
+    pista: 'El vector $\\hat{\\mathbf{\\beta}} = \\begin{bmatrix} \\hat{\\beta}_0 \\\\ \\hat{\\beta}_1 \\\\ \\hat{\\beta}_2 \\end{bmatrix}$ contiene el intercepto en la primera entrada, el coeficiente de $x_1$ en la segunda y el de $x_2$ en la tercera.',
+    explicacion: 'Paso 1. El modelo de regresión múltiple es $\\hat{y} = \\hat{\\beta}_0 + \\hat{\\beta}_1 x_1 + \\hat{\\beta}_2 x_2$. Paso 2. El vector $\\hat{\\mathbf{\\beta}} = ' + betaVec + '$ agrupa los tres coeficientes. Paso 3. ' + c.labels[idx].charAt(0).toUpperCase() + c.labels[idx].slice(1) + ' es $' + res + '$.'
+  };
+}
+
+// Variante 29: coeficiente de determinación ajustado R²_adj (numeric)
+function vR2Adjusted(){
+  var combos = [
+    {r2:0.8, n:7, p:2, adj:0.7},
+    {r2:0.9, n:7, p:2, adj:0.85},
+    {r2:0.6, n:7, p:2, adj:0.4},
+    {r2:0.75, n:7, p:2, adj:0.625},
+    {r2:0.82, n:12, p:2, adj:0.78},
+    {r2:0.9, n:12, p:1, adj:0.89}
+  ];
+  var c = sel(combos);
+  var ctx = sel([
+    'Alejandra, doctoranda en IA, compara el ajuste de modelos con distinto número de predictores',
+    'Diego, investigador de operaciones, evalúa si añadir regresores mejora el modelo',
+    'Enrique, profesor de estadística, explica por qué $R^2$ crece al añadir variables'
+  ]);
+  var problema = ctx + '. En una regresión lineal con $p=' + c.p + '$ predictores y $n=' + c.n + '$ observaciones, el coeficiente de determinación es $R^2 = ' + c.r2 + '$. Calcula el coeficiente de determinación ajustado $R^2_{\\text{adj}}$.';
+  var unmr2 = 1 - c.r2;
+  var n1 = c.n - 1;
+  var np1 = c.n - c.p - 1;
+  return {
+    tipo:'numerica',
+    problema: problema,
+    solucion: 'El coeficiente ajustado es $R^2_{\\text{adj}} = 1 - \\dfrac{(1-R^2)(n-1)}{n-p-1} = 1 - \\dfrac{' + unmr2.toFixed(2) + '\\cdot' + n1 + '}{' + np1 + '} = ' + c.adj + '$.',
+    respuestaLaTeX: 'R^2_{\\text{adj}} = ' + c.adj,
+    acepta: [String(c.adj), c.adj.toFixed(2), c.adj.toFixed(4)],
+    respuesta: c.adj,
+    tolerancia: 0.001,
+    pista: 'La fórmula es $R^2_{\\text{adj}} = 1 - \\dfrac{(1-R^2)(n-1)}{n-p-1}$, donde $p$ es el número de predictores. Penaliza añadir variables que no contribuyen al modelo.',
+    explicacion: 'Paso 1. Identifica $R^2=' + c.r2 + '$, $n=' + c.n + '$ y $p=' + c.p + '$. Paso 2. Calcula $1-R^2=' + unmr2.toFixed(2) + '$ y los grados de libertad $n-p-1=' + np1 + '$. Paso 3. Sustituye: $R^2_{\\text{adj}} = 1 - \\dfrac{' + unmr2.toFixed(2) + '\\cdot' + n1 + '}{' + np1 + '} = 1 - ' + (unmr2*n1/np1).toFixed(4) + ' = ' + c.adj + '$. Paso 4. Como $R^2_{\\text{adj}} < R^2$, el ajuste se penaliza al considerar el número de predictores.'
+  };
+}
+
 function gen(){
-  var variantes = [vPendiente, vIntercepto, vPrediccionSimple, vPrediccionMultiple, vR2, vFormulaPendiente, vSSE, vCorrelacion, vTcorrelacion, vR2residuos, vSyx, vTutilidad, vResiduo, vGL, vFormulaR2, vFormulaSyx, vFormulaTcorr, vBernoulliMLE, vPoissonMLE, vExpMLE, vNormalMuMLE, vNormalSigma2MLE, vFormulaMLE];
+  var variantes = [vPendiente, vIntercepto, vPrediccionSimple, vPrediccionMultiple, vR2, vFormulaPendiente, vSSE, vCorrelacion, vTcorrelacion, vR2residuos, vSyx, vTutilidad, vResiduo, vGL, vFormulaR2, vFormulaSyx, vFormulaTcorr, vBernoulliMLE, vPoissonMLE, vExpMLE, vNormalMuMLE, vNormalSigma2MLE, vFormulaMLE, vPseudoinversaFormula, vNormalEqSolve, vATAelement, vMultipleResiduo, vMultipleCoef, vR2Adjusted];
   var idx = Math.floor(Math.random()*variantes.length);
   return variantes[idx]();
 }
